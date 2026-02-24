@@ -38,19 +38,34 @@ Turbo Pascal, named Borland Pascal.
 The 'software' folder contains copies of the compilers, debuggers, linkers, libraries and other tools I uss in coding 
 with these old environments.
 
-| File                | Description                                                   |
-| ------------------- | ------------------------------------------------------------- |
-| Turbo-Pascal-71.zip | Turbo Pascal version 7.1 - The final released for DOS in 1992 |
+| File                                 | Comments                                                      |
+| ------------------------------------ | ------------------------------------------------------------- |
+| Borland-CPP-31.zip                   | Borland C++ version 3.1 last version for DOS                  |
+| Paradox-Engine-301.zip               | Version 3.01 of the Paradox Engine use with TP 6.0 or 7.0     |
+| Paradox-45.zip                       | Paradox Version 4.5                                           |
+| Quattro-Pro-56.zip                   | Quatero Pro Version 5.6                                       |
+| Turbo-Pascal-71.zip                  | Turbo Pascal version 7.1 - The final released for DOS in 1992 |
+| Turbo-Pascal-Toolbox-40-Database.zip | No manual for version 4.0 could be found - see notes          |
+
+*Note on the Paradox Engine*  I could only find the first two disk for this installation, I don't know how many disks
+were in the original package, but without the missing disks the install does manage to install the needed pascal units
+and samples!
 
 # Manuals Index
 
 The 'manuals' folder contains all the reference material I make use of when working with these old development 
 environments.
 
-| File                        | Description                                             |
-| --------------------------- | ------------------------------------------------------- |
-| Turbo-Pascal-71-Manuals.zip | PDFs of the manuals for TP version 7 and Turbo Vision 2 |
+| File                                    | Description                                             |
+| --------------------------------------- | ------------------------------------------------------- |
+| Essential-Pascal.pdf                    | Book by Marco Cantu                                     |
+| Fractal-Programming-in-Turbo-Pascal.pdf | Includes disk                                           |
+| Turbo-Pascal-71-Manuals.zip             | PDFs of the manuals for TP version 7 and Turbo Vision 2 |
+| Turbo-Database-Toolbox-1985.pdf         |                                                         |
 
 # Videos
 
 The 'videos' folder holds copies of videos I have posted on [my YouTube channel](https://www.youtube.com/@ObjectPascal).
+
+### Tags
+#pascal #lazarus #delphi #borland #objectpascal #turbopascal
