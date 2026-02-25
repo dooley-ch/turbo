@@ -9,6 +9,8 @@
 { 14/02/2026 - Initial Version                             }
 {==========================================================}
 
+{ Standard class used to load text files }
+
 unit txtfile;
 
 interface

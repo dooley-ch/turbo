@@ -8,6 +8,11 @@
 { History                                                  }
 { 22/02/2026 - Initial Version                             }
 {==========================================================}
+
+{ The Config unit provides access to the application
+  configuration information stored in the application's
+	INI file (located in the same folder as the application) }
+
 unit Config;
 
 interface

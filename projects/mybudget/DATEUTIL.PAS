@@ -10,6 +10,8 @@
 {==========================================================}
 unit DateUtil;
 
+{ Defines the Date class and associated routines }
+
 interface
 
 uses

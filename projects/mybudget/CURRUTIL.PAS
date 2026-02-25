@@ -1,5 +1,5 @@
 {==========================================================}
-{ curutils.pas                                             }
+{ currutil.pas                                             }
 {                                                          }
 { Created: 17/02/2026                                      }
 {                                                          }
@@ -8,6 +8,9 @@
 { History                                                  }
 { 17/02/2026 - Initial Version                             }
 {==========================================================}
+
+{ Defines the currenc class and associated routines }
+
 unit CurrUtil;
 
 interface

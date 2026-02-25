@@ -1,5 +1,5 @@
 {==========================================================}
-{ logfile.pas                                             }
+{ logfile.pas                                              }
 {                                                          }
 { Created: 10/02/2026                                      }
 {                                                          }
@@ -9,7 +9,10 @@
 { 10/02/2026 - Initial Version                             }
 {==========================================================}
 
-unit logfile;
+{ Defines the class used to write entries to the applicatoin
+	log file }
+
+unit LogFile;
 
 interface
 

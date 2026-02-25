@@ -8,6 +8,9 @@
 { History                                                  }
 { 08/02/2026 - Initial Version                             }
 {==========================================================}
+
+{ Defines the application error messages }
+
 unit ErrMsg;
 
 interface
@@ -16,6 +19,7 @@ const
 	UnexpectedError: Integer = 1000;
   ConfigFileNotFoundError: Integer = 1001;
   FileNotFoundError: Integer = 1002;
+  DbInitError : Integer = 1003;
 
 function GetErrorString(const errNum: Integer): String;
 

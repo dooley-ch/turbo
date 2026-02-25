@@ -8,6 +8,9 @@
 { History                                                  }
 { 17/02/2026 - Initial Version                             }
 {==========================================================}
+
+{ Defines the class used to load the application ini file }
+
 unit IniFile;
 
 interface

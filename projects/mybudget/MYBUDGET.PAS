@@ -12,7 +12,7 @@
 program MyBudget;
 
 uses
-	Crt, Core, Config, LogFile, ErrMsg, ImpFile;
+	Crt, Core, Config, LogFile, ErrMsg, ImpFile, Db;
 
 const
   BANK_FILE: String = 'C:\PROJECTS\MYBUDGET\DATA\IMPORT\BANK\01-2025.CSV';
@@ -47,14 +47,17 @@ begin
   vFileName := PathCombine(ConfigInfo.LogsFolder, 'APP.LOG');
   LogFileName := vFileName;
 
-  { Log Start up}
+  { Log start up}
   LogStart;
 
-  New(hBank, Init(BANK_FILE));
+  { Init the database }
+  InitDb;
+
+{  New(hBank, Init(BANK_FILE));
   New(hCard, Init(CARD_FILE));
 
   Dispose(hBank);
-  Dispose(hCard);
+  Dispose(hCard); }
 
   { Run the application }
   ReadLn;

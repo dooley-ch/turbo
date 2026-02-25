@@ -8,12 +8,21 @@
 { History                                                  }
 { 19/02/2026 - Initial Version                             }
 {==========================================================}
+
+{ Common utility routines used by the application }
+
 unit Core;
 
 interface
 
 type
 	TFileName = String[128];
+  TIdStr = String[2];
+
+{ Database Id packing routines }
+
+function IdToStr(const value: Integer): TIdStr;
+function StrToId(const value: String): Integer;
 
 { File handling routines }
 
@@ -63,6 +72,18 @@ uses
 const
 	PathSeparator: Char = '\';
   FilePoint: Char = '.';
+
+{ Database Id packing routines ----------------------------}
+
+function IdToStr(const value: Integer): TIdStr;
+begin
+	IdToStr := Chr(Hi(value)) + Chr(Lo(value));
+end;
+
+function StrToId(const value: String): Integer;
+begin
+  StrToId := Swap(Ord(value[1])) + Ord(value[2]);
+end;
 
 { Boolean handling routines -------------------------------}
 

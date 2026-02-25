@@ -1,0 +1,7 @@
+Const
+  MaxDataRecSize = 292;
+  MaxKeyLen      =  30;
+  PageSize       =  16;
+  Order          =   8;
+  PageStackSize  =   5;
+  MaxHeight      =   5;

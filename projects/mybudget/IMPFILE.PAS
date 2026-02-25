@@ -8,6 +8,9 @@
 { History                                                  }
 { 23/02/2026 - Initial Version                             }
 {==========================================================}
+
+{ Defines the classes used to load the statement files }
+
 unit ImpFile;
 
 interface
