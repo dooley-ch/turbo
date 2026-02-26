@@ -46,6 +46,7 @@ with these old environments.
 | Quattro-Pro-56.zip                   | Quatero Pro Version 5.6                                       |
 | Turbo-Pascal-71.zip                  | Turbo Pascal version 7.1 - The final released for DOS in 1992 |
 | Turbo-Pascal-Toolbox-40-Database.zip | No manual for version 4.0 could be found - see notes          |
+| Turbo-Professional-502.zip           | Turbo Power - Turbo Professional 5.0                          |
 
 *Note on the Paradox Engine*  I could only find the first two disk for this installation, I don't know how many disks
 were in the original package, but without the missing disks the install does manage to install the needed pascal units

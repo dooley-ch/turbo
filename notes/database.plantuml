@@ -1,0 +1,87 @@
+@startuml
+
+' hide the spot
+' hide circle
+
+' avoid problems with angled crows feet
+skinparam linetype ortho
+
+entity Version {
+    *Id : String[2] <<PK>>
+    --
+    *Major : String[2]
+    *Minor : String[2]
+    *Build : String[2]
+    --
+    *Created : String[19]
+    *Status: Integer
+}
+
+entity Generator {
+    *Id : String[2] <<PK>>
+    --
+    *TableNabe : String[20]
+    *LastId : String[2]
+    --
+    *Created : String[19]
+    *Updated : String[19]    
+}
+
+entity bank_statement {
+    *id : String[2] <<PK>>
+    --
+    *FromDate : String[10]
+    *ToDate : String[10]
+    *Account : String[20]
+    *Title : String[50]
+    --
+    *Imported : String[19]
+    *Updated : String[19] 
+    *WorkFlow : Char    
+}
+
+entity bank_transaction {
+    *id : String[2] <<PK>>
+    --
+    *booking_date : String[10]
+    *description : String[256]
+    *credit : String[16]
+    *debit : String[16]
+    --
+    *bank_statement_id : String[2] <<FK>>
+    *Imported : String[19]
+    *Updated : String[19] 
+    *WorkFlow : Char    
+}
+
+entity credit_card_statement {
+    *id : String[2] <<PK>>
+    --
+    *FromDate : String[10]
+    *ToDate : String[10]
+    *Account : String[20]
+    *Title : String[50]
+    --
+    *Imported : String[19]
+    *Updated : String[19] 
+    *WorkFlow : Char    
+}
+
+entity credit_card_transaction {
+    *id : String[2] <<PK>>
+    --
+    *booking_date : String[10]
+    *description : String[256]
+    *credit : String[16]
+    *debit : String[16]
+    --
+    *credit_card_statement_id : String[2] <<FK>>
+    *Imported : String[10]
+    *Updated : String[19] 
+    *WorkFlow : Char    
+}
+
+credit_card_statement ||--|{ credit_card_transaction
+bank_statement ||--|{ bank_transaction
+
+@enduml
