@@ -27,7 +27,7 @@ type
     Minor		: TVersionField; 	{ String[2] }
     Build		: TVersionField; 	{ String[2] }
     Created	: TDTField; 			{ String[19] }
-    Status  : Integer;
+    Status  : Integer;        { Integer [2] }
   end;
 
   TGeneratorRecord = record { 62 }
@@ -38,28 +38,30 @@ type
     Updated		: TDTField;		{ String[19] }
   end;
 
-  TBankStatementRecord = record { 130 }
+  TBankStatementRecord = record { 131 }
   	Id				: TIdField;				{ String[2] }
     FromDate,  									{ String[10] }
     ToDate		: TDateField; 		{ String[10] }
     Title			: TTitleField; 		{ String[50] }
     Account		: TAccountField; 	{ String[20] }
-    Created, 										{ String[19] }
+    Imported, 									{ String[19] }
     Updated		: TDTField;				{ String[19] }
+    Workflow 	: TWorkFlowField; { Char [1] }
   end;
 
-  TBankTransactionRecord = record { 284 }
+  TBankTransactionRecord = record { 285 }
   	Id					: TIdField; 			{ String[2] }
     BookingDate	: TDateField;			{ String[10] }
     Description	: TDescField; 		{ String[200] }
     Credit,     									{ String[16] }
     Debit				: TCurrField; 		{ String[16] }
-    Created, 											{ String[19] }
+    Imported, 											{ String[19] }
     Updated			: TDTField;				{ String[19] }
-    StatementId : TIdField        { String[2] }
+    StatementId : TIdField;       { String[2] }
+    Workflow 		: TWorkFlowField; { Char [1] }
 	end;
 
-  TCreditCardStatementRecord = record { 130 }
+  TCreditCardStatementRecord = record { 131 }
   	Id				: TIdField; 						{ String[2] }
     FromDate,  												{ String[10] }
     ToDate		: TDateField; 					{ String[10] }
@@ -67,9 +69,10 @@ type
     Account		: TAccountField; 				{ String[20] }
     Created,       										{ String[19] }
     Updated		: TDTField;							{ String[19] }
+    Workflow 	: TWorkFlowField; 			{ Char [1] }
 	end;
 
-  TCreditCartTransactionRecord = record { 284 }
+  TCreditCartTransactionRecord = record { 285 }
   	Id					: TIdField;  						{ String[2] }
     BookingDate	: TDateField; 					{ String[10] }
     Description	: TDescField; 					{ String[200] }
@@ -77,7 +80,8 @@ type
     Debit				: TCurrField; 					{ String[16] }
     Created,       											{ String[19] }
     Updated			: TDTField;							{ String[19] }
-    StatementId : TIdField        			{ String[2] }
+    StatementId : TIdField;        			{ String[2] }
+    Workflow 		: TWorkFlowField; 			{ Char [1] }
 	end;
 
   MaxDataType = TBankTransactionRecord;

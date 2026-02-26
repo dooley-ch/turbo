@@ -65,7 +65,7 @@ type
 implementation
 
 uses
-	Core, LogFile;
+	Core, LogFile, TPString;
 
 { TStatementFile ------------------------------------------}
 
@@ -162,7 +162,7 @@ var
   	if charPos <> 0 then
   		begin
     		vValue := Copy(line, charPos + 1, len - charPos);
-      	vValue := Trim(vValue, '"');
+      	vValue := TrimChar(vValue, '"');
       end;
 
     ExtractValue := vValue;
@@ -191,7 +191,7 @@ var
     { Description }
     charPos := Pos(';', subLine);
     vValue := Copy(subLine, 1, charPos - 1);
-    vValue := Trim(vValue, '"');
+    vValue := TrimChar(vValue, '"');
     vDesc := vValue;
     len := Length(subLine);
     subLine := Copy(subLine, charPos + 1, len - charPos);
@@ -267,7 +267,7 @@ end;
 constructor TBankFile.Init(const vFileName: String);
 begin
 	inherited Init(vFileName);
-  LogInfo('Bank Statement loaded: ' + FullFileName(vFileName));
+  LogInfo('Bank Statement loaded: ' + JustFilename(vFileName));
 end;
 
 destructor TBankFile.Done;
@@ -336,7 +336,7 @@ var
     { Description }
     charPos := Pos(';', subLine);
     vValue := Copy(subLine, 1, charPos - 1);
-    vValue := Trim(vValue, '"');
+    vValue := TrimChar(vValue, '"');
     vDesc := vValue;
     len := Length(subLine);
     subLine := Copy(subLine, charPos + 1, len - charPos);
@@ -407,7 +407,7 @@ end;
 constructor TCreditCardFile.Init(const vFileName: String);
 begin
 	inherited Init(vFileName);
-  LogInfo('Credit Card Statement loaded: ' + FullFileName(vFileName));
+  LogInfo('Credit Card Statement loaded: ' + JustFilename(vFileName));
 end;
 
 destructor TCreditCardFile.Done;

@@ -32,13 +32,13 @@ var
 implementation
 
 uses
-	Core, IniFile, ErrMSg, LogFile;
+	Core, IniFile, ErrMSg, LogFile, TPString;
 
 var
 	iniFileName, vValue, errMsgStr: String;
   pFile: PIniFile;
 begin
-	iniFileName := SwapFileExt(ParamStr(0), '.INI');
+	iniFileName := ForceExtension(ParamStr(0), 'INI');
 
   if not FileExists(iniFileName) then
   begin

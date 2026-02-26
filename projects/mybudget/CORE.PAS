@@ -27,11 +27,6 @@ function StrToId(const value: String): Integer;
 { File handling routines }
 
 function FileExists(const vFileName: TFileName): Boolean;
-function FilePath(const vFileName: TFileName): String;
-function FileExt(const vFileName: TFileName): String;
-function FileName(const vFileName: TFileName): String;
-function FullFileName(const vFileName: TFileName): String;
-function SwapFileExt(const vFileName: TFileName; const vNewExt: String): TFileName;
 function PathCombine(const vBasePath, vPath: TFileName): TFileName;
 
 { String handling routines }
@@ -44,9 +39,9 @@ function Spaces(const num: Byte): String;
 function UCase(const value: String): String;
 function LCase(const value: String): String;
 
-function RightTrim(const value: String; const ch: Char): String;
-function LeftTrim(const value: String; const ch: Char): String;
-function Trim(const value: String; const ch: Char): String;
+function RightTrimChar(const value: String; const ch: Char): String;
+function LeftTrimChar(const value: String; const ch: Char): String;
+function TrimChar(const value: String; const ch: Char): String;
 
 function MidStr(const value: String; const startPos, numChars: Byte): String;
 function LeftStr(const value: String; const numChars: Byte): String;
@@ -67,7 +62,7 @@ function BoolToStr(const value: Boolean): String;
 implementation
 
 uses
-	Dos, Strings;
+	Dos, Strings, TPString;
 
 const
 	PathSeparator: Char = '\';
@@ -351,21 +346,21 @@ begin
 	FillChar(value, SizeOf(value), 0);
 end;
 
-function RightTrim(const value: String; const ch: Char): String;
+function RightTrimChar(const value: String; const ch: Char): String;
 { Trims trailing characters from a given string }
 var
 	len: Byte;
 begin
-	RightTrim := value;
+	RightTrimChar := value;
   len := Ord(value[0]);
 
   while value[len] = ch do
   	Dec(len);
 
-  RightTrim[0] := Chr(len);
+  RightTrimChar[0] := Chr(len);
 end;
 
-function LeftTrim(const value: String; const ch: Char): String;
+function LeftTrimChar(const value: String; const ch: Char): String;
 { Trims the leading characters from a given string }
 var
 	cnt: Byte;
@@ -375,13 +370,13 @@ begin
   while value[cnt] = ch do
   	Inc(cnt);
 
-  LeftTrim := Copy(value, cnt, Length(value) - Pred(cnt));
+  LeftTrimChar := Copy(value, cnt, Length(value) - Pred(cnt));
 end;
 
-function Trim(const value: String; const ch: Char): String;
+function TrimChar(const value: String; const ch: Char): String;
 { Trims the leading and trailing characters of the string }
 begin
-	Trim := LeftTrim(RightTrim(value, ch), ch);
+	TrimChar := LeftTrimChar(RightTrimChar(value, ch), ch);
 end;
 
 { File handling routines ----------------------------------}
@@ -431,63 +426,4 @@ begin
   FileExists := True;
 end;
 
-function SwapFileExt(const vFileName: TFileName; const vNewExt: String): TFileName;
-{ Returns a new file name with the new extension }
-var
-	d: DirStr;
-  n: NameStr;
-  e: ExtStr;
-  vValue: String;
-begin
-	FSplit(vFileName, d, n, e);
-
-  vValue := d + n;
-  vValue := vValue + vNewExt;
-
-  SwapFileExt := vValue;
-end;
-
-function FilePath(const vFileName: TFileName): String;
-{ Extracts the path element from a qualified file name }
-var
-	d: DirStr;
-  n: NameStr;
-  e: ExtStr;
-begin
-	FSplit(vFileName, d, n, e);
-  FilePath := d;
-end;
-
-function FileExt(const vFileName: TFileName): String;
-{ Extracts the ext element from a qualified file name }
-var
-	d: DirStr;
-  n: NameStr;
-  e: ExtStr;
-begin
-	FSplit(vFileName, d, n, e);
-  FileExt := e;
-end;
-
-function FileName(const vFileName: TFileName): String;
-{ Extracts the name element from a qualified file name }
-var
-	d: DirStr;
-  n: NameStr;
-  e: ExtStr;
-begin
-	FSplit(vFileName, d, n, e);
-  FileName := n;
-end;
-
-function FullFileName(const vFileName: TFileName): String;
-{ Extracts the name and extension elements from a qualified file name }
-var
-	d: DirStr;
-  n: NameStr;
-  e: ExtStr;
-begin
-	FSplit(vFileName, d, n, e);
-  FullFileName := n + e;
-end;
 end.

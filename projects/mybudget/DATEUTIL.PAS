@@ -162,8 +162,8 @@ begin
   Str(vMonth:2, month);
   Str(vYear:4, year);
 
-  day := Trim(day, ' ');
-  month := Trim(month, ' ');
+  day := TrimChar(day, ' ');
+  month := TrimChar(month, ' ');
 
   if Length(day) = 1 then
   	day := '0' + day;
@@ -197,9 +197,9 @@ begin
   Str(m:2, mins);
   Str(s:2, secs);
 
-  hours := Trim(hours, ' ');
-  mins := Trim(mins, ' ');
-  secs := Trim(secs, ' ');
+  hours := TrimChar(hours, ' ');
+  mins := TrimChar(mins, ' ');
+  secs := TrimChar(secs, ' ');
 
   if Length(hours) = 1 then
   	hours := '0' + hours;

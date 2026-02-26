@@ -240,8 +240,8 @@ begin
 
     if IsSection(line) then
     begin
-    	sectionName := Trim(line, '[');
-      sectionName := Trim(sectionName, ']');
+    	sectionName := TrimChar(line, '[');
+      sectionName := TrimChar(sectionName, ']');
 
       New(pSection, Init(sectionName));
 
@@ -358,17 +358,17 @@ begin
       vKey := vEntry;
       vKey[0] := Chr(Pred(len));
 
-      vValue := Trim(vValue, #32);
-      vValue := Trim(vValue, #9);
-      vValue := Trim(vValue, '"');
-      vValue := Trim(vValue, '''');
-      vValue := Trim(vValue, ' ');
+      vValue := TrimChar(vValue, #32);
+      vValue := TrimChar(vValue, #9);
+      vValue := TrimChar(vValue, '"');
+      vValue := TrimChar(vValue, '''');
+      vValue := TrimChar(vValue, ' ');
 
-      vKey := Trim(vKey, #32);
-      vKey := Trim(vKey, #9);
-      vKey := Trim(vKey, '"');
-      vKey := Trim(vKey, '''');
-      vKey := Trim(vKey, ' ');
+      vKey := TrimChar(vKey, #32);
+      vKey := TrimChar(vKey, #9);
+      vKey := TrimChar(vKey, '"');
+      vKey := TrimChar(vKey, '''');
+      vKey := TrimChar(vKey, ' ');
 
       FKey := NewStr(vKey);
       FValue := NewStr(vValue);

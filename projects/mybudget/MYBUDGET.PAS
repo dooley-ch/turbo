@@ -61,4 +61,7 @@ begin
 
   { Run the application }
   ReadLn;
+
+  { Clean up before exiting }
+  FinaliseDb;
 end.
