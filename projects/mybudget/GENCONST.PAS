@@ -1,6 +1,6 @@
 program GenTAConstants;
 
-{$I MYBUDGET.TYP}
+{$I DB.TYP}
 
 var
   OutFile : text;
