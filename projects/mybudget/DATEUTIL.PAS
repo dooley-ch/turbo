@@ -65,6 +65,7 @@ function FormatDateStr(const vDay, vMonth, vYear: Word): String;
 function ParseDate(const value: String; var vDay, vMonth, vYear: Word): Boolean;
 function ParseDateEx(const value: String; const separator: Char;
 										const format: TDateFormat; var vDay, vMonth, vYear: Word): Boolean;
+function TimeStampStr: String;
 
 implementation
 
@@ -214,6 +215,36 @@ end;
 function DateTimeStr: String;
 begin
 	DateTimeStr := DateStr + ' ' + TimeStr;
+end;
+
+function TimeStampStr: String;
+var
+	h, m, s, mil: Word;
+  hours, mins, secs, mils: String;
+begin
+	GetTime(h, m, s, mil);
+
+  Str(h:2, hours);
+  Str(m:2, mins);
+  Str(s:2, secs);
+
+  hours := TrimChar(hours, ' ');
+  mins := TrimChar(mins, ' ');
+  secs := TrimChar(secs, ' ');
+
+  if Length(hours) = 1 then
+  	hours := '0' + hours;
+  if Length(mins) = 1 then
+  	mins := '0' + mins;
+  if Length(secs) = 1 then
+  	secs := '0' + secs;
+
+  Str(mil, mils);
+
+  TimeStampStr := DateStr + ' ' +
+									hours + TimeSeparator +
+									mins + TimeSeparator +
+									secs + '.' + mils;
 end;
 
 { TDate ---------------------------------------------------}

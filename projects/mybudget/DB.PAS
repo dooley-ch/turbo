@@ -38,6 +38,8 @@ type
 
     procedure OpenTable(var hFile: DataFile; fileName: String; recLen: word);
 		procedure OpenNdx(var hFile: IndexFile; fileName: String; keyLen, S: Byte);
+    procedure VersionCheck;
+    function GetNextId(const table: String): Integer;
   public
   	constructor init(const dbFolder: String);
     destructor Done; virtual;
@@ -55,7 +57,8 @@ var
 implementation
 
 uses
-	Core, Config, LogFile, ErrMsg, TPString;
+	Core, Config, LogFile, ErrMsg, TPString, ExitOnEr,
+	DateUtil;
 
 const
 	{ File Names }
@@ -76,10 +79,89 @@ const
   File_ImportTrans_Workflow_NDX: String[12] = 'MYBUD402.NDX';
   File_ImportTrans_Stmt_NDX		 : String[12] = 'MYBUD403.NDX';
 
+  { Database Version Number }
+  Version_Major: Byte = 1;
+  Version_Minor: Byte = 0;
+  Version_Build: Byte = 1;
+
   { Record types }
 {$I DB.TYP}
 
 { TDatabase ----------------------------------------------}
+
+function TDatabase.GetNextId(const table: String): Integer;
+begin
+	GetNextId := 1;
+end;
+
+procedure TDatabase.VersionCheck;
+const
+	ConfigKey: String[7] = 'Version';
+  VersionString: String[7] = '1.01.01';
+var
+	entry: TConfigRecord;
+  timeStamp: String[23];
+  idStr: String[4];
+  index: LongInt;
+  verStr: String[7];
+begin
+	{ If there is no record, then it's a new DB, so need
+	  to add the version number into the database }
+  if UsedRecs(FConfig) = 0 then
+  	begin
+    	timeStamp := TimeStampStr;
+      idStr := IdToStr(GetNextId('config'));
+
+      (* Add the record *)
+      With entry do
+      begin
+      	ID := idStr;
+        Key := ConfigKey;
+        Value := VersionString;
+        Created := timeStamp;
+        Updated := timeStamp;
+      end;
+
+      AddRec(FConfig, index, entry);
+      if OK then
+      	begin
+        	FlushFile(FConfig);
+
+        	(* Update index files *)
+          AddKey(FConfigPK, index, idStr);
+          if not OK then
+      			ExitOnFatalError('Failed to insert config PK in index', 'DB.PAS', 127, 0);
+          AddKey(FConfigKey, index, ConfigKey);
+          if not OK then
+      			ExitOnFatalError('Failed to insert config key in index', 'DB.PAS', 127, 0);
+
+          FlushIndex(FConfigPK);
+          FlushIndex(FConfigKey);
+        end
+      else
+      	ExitOnFatalError('Failed to insert DB version number', 'DB.PAS', 128, 0);
+
+    	Exit;
+    end;
+
+  { Check the version number }
+  ClearKey(FConfigKey);
+  FindKey(FConfigKey, index, ConfigKey);
+  if OK then
+  	begin
+    	GetRec(FConfig, index, entry);
+      if OK then
+      	verStr := entry.Value;
+        if verStr <> VersionString then
+        	ExitOnFatalError('Invalid database version: expected - ' +
+														VersionString + ' got - ' + verStr,
+														'DB.PAS', 157, 0);
+      begin
+      end;
+    end;
+
+  ExitOnFatalError('Failed to validate database version number', 'DB.PAS', 106, 0);
+end;
 
 procedure TDatabase.OpenTable(var hFile: DataFile; fileName: String; recLen: word);
 begin
@@ -88,8 +170,9 @@ begin
   	begin
   		MakeFile(hFile, fileName, recLen);
   		if OK then
-  			LogInfo('Database file created: ' + JustFileName(fileName));
-      (* TODO - Exit if can't create table *)
+  			LogInfo('Database file created: ' + JustFileName(fileName))
+      else
+      	ExitOnFatalError('Failed to create database file: '  + JustFileName(fileName), 'DB.PAS', 94, 0);
     end;
 end;
 
@@ -100,8 +183,9 @@ begin
   	begin
     	MakeIndex(hFile, fileName, keyLen, S);
   		if OK then
-  			LogInfo('Database index created: ' + JustFileName(fileName));
-      (* TODO - Exit if can't create index *)
+  			LogInfo('Database index created: ' + JustFileName(fileName))
+      else
+      	ExitOnFatalError('Failed to create database file: '  + JustFileName(fileName), 'DB.PAS', 106, 0);
     end;
 end;
 
@@ -154,6 +238,8 @@ begin
 
 	{ Set up index handling }
   InitIndex;
+
+  VersionCheck;
 end;
 
 destructor TDatabase.Done;

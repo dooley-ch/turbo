@@ -15,6 +15,7 @@ type
 	TIdField = String[4];
   TNameField = String[30];
   TDateTimeField = String[19];
+  TTimeStampField = String[23];
   TDateField = String[10];
   TWorkflowField = String[2];
   TMoneyField = String[12];
@@ -26,7 +27,7 @@ type
     Key: TNameField;
     Value: String[50];
     Created,
-		Updated: TDateTimeField;
+		Updated: TTimeStampField;
   end;
 
   PGenKey = ^TGenKey;
@@ -35,7 +36,7 @@ type
     Key: TNameField;
     Value: String[2];
     Created,
-		Updated: TDateTimeField;
+		Updated: TTimeStampField;
   end;
 
   PImpStmt = ^TImpStmt;
@@ -47,7 +48,7 @@ type
     StmtType: Char;
     Workflow: TWorkflowField;
     Created,
-		Updated: TDateTimeField;
+		Updated: TTimeStampField;
   end;
 
   PImpTrans = ^TImpTrans;
@@ -59,7 +60,7 @@ type
     Debit: TMoneyField;
     Workflow: TWorkflowField;
     Created,
-		Updated: TDateTimeField;
+		Updated: TTimeStampField;
   end;
 
   MaxDataType = TImpTrans;

@@ -10,3 +10,5 @@ projects/MYBUDGET/DATA/LOGS/*.LOG
 projects/MYBUDGET/TACCESS.ERR
 projects/MYBUDGET/DATA/DB/*.*
 *.ERR
+projects/TEMP
+temp
