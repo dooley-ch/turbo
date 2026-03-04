@@ -12,3 +12,6 @@ projects/MYBUDGET/DATA/DB/*.*
 *.ERR
 projects/TEMP
 temp
+projects/STRINGS/TPX.DSK
+projects/STRINGS/TPX.PSM
+projects/STRINGS/TPX.TP

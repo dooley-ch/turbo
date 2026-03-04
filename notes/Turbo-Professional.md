@@ -13,9 +13,7 @@ units to be of particular use to me in developing my programs.
 
 | Unit         | Comments                                                |
 | ------------ | ------------------------------------------------------- |
-| COLORDEF.PAS | Constands used to define various colours                |
 | TPSTRING.PAS | Basic string manipulation routines                      |
-| TPTIMER.PAS  | Allows events to be timed with 1 microsecond resolution |
 
 I placed the compiled units in Turbo Pascal's Units folder.
 
