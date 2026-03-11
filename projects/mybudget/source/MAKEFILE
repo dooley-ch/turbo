@@ -1,0 +1,29 @@
+# ------------------------------------------------------- #
+# MyBudget - Make File                                    #
+#                                                         #
+# Copyright (c) 2026 James Dooley <james@dooley.ch>       #
+#                                                         #
+# 10/03/2026 - Initial Version                            #
+# ------------------------------------------------------- #
+
+default:
+	ECHO "There is no default task"
+
+clean_bin:
+	-DEL ..\BIN\*.TPU
+	-DEL ..\BIN\*.EXE
+  -DEL ..\BIN\*.TPP
+
+clean_db:
+	-DEL ..\DATA\DB\*.*
+
+clean_log:
+	-DEL ..\DATA\LOGS\APP.LOG
+
+clean:
+	-DEL *.BAK
+	-DEL *.TPU
+	-DEL *.TPP
+
+
+

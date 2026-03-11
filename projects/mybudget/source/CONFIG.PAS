@@ -29,7 +29,7 @@ var
 implementation
 
 uses
-	Dos, JDUtils, JDString;
+	Dos, TPString, JDUtils, JDString;
 
 {$I SHARED.INC}
 
