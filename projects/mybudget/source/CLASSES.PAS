@@ -14,7 +14,8 @@ uses
 	Objects;
 
 type
-	TBaseClass = object(TObject)
+	PBaseDataClass = ^TBaseDataClass;
+	TBaseDataClass = object(TObject)
   public
   	Id: LongInt;
 
@@ -22,7 +23,13 @@ type
     destructor Done; virtual;
   end;
 
-  TCategory = object(TBaseClass)
+  TBaseCollection = object(TSortedCollection)
+  private
+  	function Compare(Key1, Key2: Pointer): Integer; virtual;
+  public
+  end;
+
+  TCategory = object(TBaseDataClass)
   public
   	Name,
     Comment: String;
@@ -41,19 +48,38 @@ type
 
 implementation
 
-(**************)
-(* TBaseClass *)
-(**************)
+(******************)
+(* TBaseDataClass *)
+(******************)
 
-constructor TBaseClass.Init;
+constructor TBaseDataClass.Init;
 begin
 	inherited Init;
   Id := 0;
 end;
 
-destructor TBaseClass.Done;
+destructor TBaseDataClass.Done;
 begin
 	inherited Done;
+end;
+
+(*******************)
+(* TBaseCollection *)
+(*******************)
+
+function TBaseCollection.Compare(Key1, Key2: Pointer): Integer;
+var
+	id1, id2: LongInt;
+begin
+	id1 := PBaseDataClass(Key1)^.Id;
+	id2 := PBaseDataClass(Key2)^.Id;
+
+	if id1 < id2 then
+    Compare := -1
+  else if id1 > id2 then
+  	Compare := 1
+  else
+  	Compare := 0;
 end;
 
 (*************)

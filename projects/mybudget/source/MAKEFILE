@@ -7,7 +7,7 @@
 # ------------------------------------------------------- #
 
 default:
-	ECHO "There is no default task"
+	@ECHO Commands: clean_bin, clean_db, clean_log, clean
 
 clean_bin:
 	-DEL ..\BIN\*.TPU

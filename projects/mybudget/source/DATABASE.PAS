@@ -29,20 +29,32 @@ type
     procedure InsertVersionNumber;
     procedure CheckVersion;
 
-    function CatNameExists(const AName: String): Boolean;
+    function IsCategoryDefined(const AName: String): Boolean;
+    function CategoryExists(const id: LongInt): Boolean;
+
+    function IsSubCategoryDefined(const aCategoryId: LongInt;
+																		const aName: String): Boolean;
   public
   	constructor Init(const aFolder: PathStr);
     destructor Done; virtual;
 
-    function AddCategory(var rec: TCategory; var errCode: Byte): Boolean;
-    function GetCategory(const id: LongInt;
-										var rec: TCategory; var errCode: Byte): Boolean;
-    function GetCategoryByName(const aName: String;
-										var rec: TCategory; var errCode: Byte): Boolean;
-    function UpdateCategory(const rec: TCategory;
-										var errCode: Byte): Boolean;
+    (* --- Category -- *)
+    function AddCategory(var rec: TCategory): Boolean;
+    function GetCategory(const id: LongInt; var rec: TCategory): Boolean;
+    function GetCategoryByName(const aName: String; var rec: TCategory): Boolean;
+    function UpdateCategory(const rec: TCategory): Boolean;
     function DeleteCategory(const id: LongInt): Boolean;
+
+    (* --- Sub Category --- *)
+    function AddSubCategory(var rec: TSubCategory): Boolean;
+    function GetSubCategory(const id: LongInt; var rec: TSubCategory): Boolean;
+    function UpdateSubCategory(const rec: TSubCategory): Boolean;
+    function DeleteSubCategory(const id: LongInt; var errCode: Byte): Boolean;
   end;
+
+var
+	DbError: LongInt;
+  DbErrorMessage: String;
 
 implementation
 
@@ -54,8 +66,11 @@ uses
 
 const
   MAX_FILE_HANDLES = 50;
-	NDX_FIELD_MIN_LEN: Byte =  2;
-	NDX_FIELD_MAX_LEN: Byte = 30;
+
+  (* Index Key Lens *)
+  NDX_LEN_FK           = 10;
+  NDX_LEN_CAT_NAME     = 30;
+  NDX_LEN_SUB_CAT_NAME = 40;
 
 	(* Table Names *)
   VERSION_FILE			: NameStr = 'VERSION';
@@ -63,8 +78,8 @@ const
   SUB_CAT_TABLE_FILE: NameStr = 'CAT_SUB';
 
   (* Index Handles *)
-  NDX_CAT_NAME: Byte = 1;
-  NDX_SUB_CAT_NAME: Byte = 1;
+  NDX_CAT_NAME      : Byte = 1;
+  NDX_SUB_CAT_NAME  : Byte = 1;
   NDX_SUB_CAT_CAT_ID: Byte = 2;
 
 	(* Database Version Supported *)
@@ -105,10 +120,21 @@ type
 (* Support functions *)
 (*********************)
 
+procedure ClearErrors; forward;
+procedure SetSystemError; forward;
+procedure LogSystemError(const message: String); forward;
+procedure LogFatalError(const exitCode: Byte; const message: String); forward;
+function BuildNameKey(const aName: String): String; forward;
+function BuildSubNameKey(const aId: LongInt; const aName: String): String; forward;
+function BuildIdKey(const aId: LongInt): String; forward;
+
+
+
+
 procedure DoLogFatalError(const exitCode: Byte; const message: String);
 var
   errClass, errNum: Integer;
-  strClass, strNum: String;
+  strClass, strNum, errMsg: String;
 begin
 	errClass := BTIsamErrorClass;
   errNum := IsamError;
@@ -122,14 +148,18 @@ begin
   if errNum < 10000 then
   	strNum := '0' + strNum;
 
+  errMsg := IsamErrorMessage(errNum);
+
   LogFatal(message + ' [' + strClass + ',' + strNum + ']');
+  LogAddInfo(errMsg);
+
   Crash(exitCode);
 end;
 
 procedure DoLogError(const message: String);
 var
   errClass, errNum: Integer;
-  strClass, strNum: String;
+  strClass, strNum, errMsg: String;
 begin
 	errClass := BTIsamErrorClass;
   errNum := IsamError;
@@ -143,12 +173,10 @@ begin
   if errNum < 10000 then
   	strNum := '0' + strNum;
 
-  LogError(message + ' [' + strClass + ',' + strNum + ']');
-end;
+  errMsg := IsamErrorMessage(errNum);
 
-function GetCatNameKey(const aName: String): String;
-begin
-	GetCatNameKey := Pack6BitKey(aName, NDX_FIELD_MAX_LEN);
+  LogError(message + ' [' + strClass + ',' + strNum + ']');
+  LogAddInfo(errMsg);
 end;
 
 (*************)
@@ -209,6 +237,8 @@ begin
   	DoLogFatalError(CRUD_NO_ADD_REC, 'Failed to insert version number');
 
   BTCloseFileBlock(versionFile);
+
+  stamp.Done;
 end;
 
 procedure TDatabase.CreateDatabase;
@@ -243,7 +273,7 @@ begin
 
   if Not IsamExists(fileName) then
   	begin
-  		indexDefs[NDX_CAT_NAME].KeyL := NDX_FIELD_MAX_LEN;
+  		indexDefs[NDX_CAT_NAME].KeyL := NDX_LEN_CAT_NAME;
   		indexDefs[NDX_CAT_NAME].AllowDupK := False;
 
   		BTCreateFileBlock(fileBaseName, SizeOf(TCategoryRecord), 1, indexDefs);
@@ -262,10 +292,10 @@ begin
 
   if Not IsamExists(fileName) then
   	begin
-  		indexDefs[NDX_SUB_CAT_NAME].KeyL := NDX_FIELD_MAX_LEN;
+  		indexDefs[NDX_SUB_CAT_NAME].KeyL := NDX_LEN_SUB_CAT_NAME;
   		indexDefs[NDX_SUB_CAT_NAME].AllowDupK := False;
 
-  		indexDefs[NDX_SUB_CAT_CAT_ID].KeyL := NDX_FIELD_MIN_LEN;
+  		indexDefs[NDX_SUB_CAT_CAT_ID].KeyL := NDX_LEN_FK;
   		indexDefs[NDX_SUB_CAT_CAT_ID].AllowDupK := True;
 
   		BTCreateFileBlock(fileBaseName, SizeOf(TSubCategoryRecord), 2, indexDefs);
@@ -332,30 +362,44 @@ end;
 
 (* --- Category --- *)
 
-function TDatabase.CatNameExists(const aName: String): Boolean;
+function TDatabase.CategoryExists(const id: LongInt): Boolean;
+var
+	data: TCategoryRecord;
+begin
+	FillChar(data, SizeOf(TCategoryRecord), #0);
+  CategoryExists := False;
+
+  BTGetRec(FCategoryTable, id, data, False);
+  if IsamOK then
+    CategoryExists := True;
+end;
+
+function TDatabase.IsCategoryDefined(const aName: String): Boolean;
 var
 	nameKey: String;
 begin
-	nameKey := GetCatNameKey(aName);
-	CatNameExists := False;
+	nameKey := BuildNameKey(aName);
+	IsCategoryDefined := False;
 
 	if BTKeyExists(FCategoryTable, NDX_CAT_NAME, 0, nameKey) then
-    CatNameExists := True;
+    IsCategoryDefined := True;
 end;
 
-function TDatabase.AddCategory(var rec: TCategory; var errCode: Byte): Boolean;
+function TDatabase.AddCategory(var rec: TCategory): Boolean;
 var
 	data: TCategoryRecord;
   refId: LongInt;
   stamp: TTimeStamp;
   nameKey: String;
 begin
-	errCode := NO_ERROR;
+	ClearErrors;
   AddCategory := True;
 
-	if CatNameExists(rec.Name) then
+	if IsCategoryDefined(rec.Name) then
   	begin
-    	errCode := CRUD_REC_EXISTS;
+    	DbError := DUPLICATE_RECORD;
+      DbErrorMessage := 'Category already defined: ' + rec.Name;
+
       AddCategory := False;
       Exit;
     end;
@@ -372,27 +416,35 @@ begin
   BTAddRec(FCategoryTable, refId, data);
   if not IsamOk then
   	begin
-    	errCode := CRUD_NO_ADD_REC;
+    	SetSystemError;
+      LogSystemError('Failed to insert category: ' + rec.Name);
+
       AddCategory := False;
-      DoLogError('Failed to insert category: ' + rec.Name);
       Exit;
     end;
 
   rec.Id := refId;
+  stamp.Done;
 
-  nameKey := GetCatNameKey(rec.Name);
+  nameKey := BuildNameKey(rec.Name);
   BTAddKey(FCategoryTable, NDX_CAT_NAME, refId, nameKey);
+  if not IsamOk then
+  	begin
+    	SetSystemError;
+      LogSystemError('Failed to insert UK for category: ' + rec.Name);
+
+      AddCategory := False;
+    end;
 end;
 
-function TDatabase.UpdateCategory(const rec: TCategory; var errCode: Byte): Boolean;
+function TDatabase.UpdateCategory(const rec: TCategory): Boolean;
 var
 	data: TCategoryRecord;
   oldName: String;
   stamp: TTimeStamp;
-  refId: LongInt;
   nameKey: String;
 begin
-	errCode := NO_ERROR;
+	ClearErrors;
   UpdateCategory := True;
 
 	FillChar(data, SizeOf(TCategoryRecord), #0);
@@ -400,7 +452,13 @@ begin
   BTGetRec(FCategoryTable, rec.id, data, False);
   if not IsamOK then
   	begin
-    	errCode := QRY_REC_NOT_FOUND;
+      if BTIsamErrorClass <> BT_ERROR_CLS_USER then
+      	begin
+      		SetSystemError;
+          LogSystemError('Failed to find category - ' + Long2Str(rec.Id));
+        end
+      else
+      	DbError := RECORD_NOT_FOUND;
       UpdateCategory := False;
       Exit;
     end;
@@ -408,41 +466,68 @@ begin
   (* Check if the name has changed *)
   oldName := '';
   if CompString(data.Name, rec.Name) <> Equal then
-    	oldName := data.Name;
+  	begin
+  		oldName := data.Name;
+
+			if IsCategoryDefined(rec.Name) then
+  			begin
+    			DbError := DUPLICATE_RECORD;
+      		DbErrorMessage := 'Category already defined: ' + rec.Name;
+
+      		UpdateCategory := False;
+      		Exit;
+    		end;
+  	end;
 
   (* Update the record *)
   stamp.Init;
-  refId := rec.Id;
 
   data.Name := rec.Name;
   data.Comment := rec.Comment;
   data.Updated := stamp.Pack;
 
-  BTPutRec(FCategoryTable, refId, data, False);
+  BTPutRec(FCategoryTable, rec.Id, data, False);
   if not IsamOK then
   	begin
-    	errCode := CRUD_NO_UPDATE;
+    	SetSystemError;
+      LogSystemError('Failed to find category - ' + Long2Str(rec.Id));
+
       UpdateCategory := False;
-      DoLogError('Failed to update category: ' + rec.Name);
       Exit;
     end;
 
+  stamp.Done;
+
   if not IsEmpty(oldName) then
   	begin
-    	nameKey := GetCatNameKey(oldName);
-    	BTDeleteKey(FCategoryTable, NDX_CAT_NAME, refId, nameKey);
+    	nameKey := BuildNameKey(oldName);
+    	BTDeleteKey(FCategoryTable, NDX_CAT_NAME, rec.Id, nameKey);
+  		if not IsamOK then
+  			begin
+    			SetSystemError;
+      		LogSystemError('Failed to delete key for category - ' + oldName);
 
-      nameKey := GetCatNameKey(rec.Name);
-      BTAddKey(FCategoryTable, NDX_CAT_NAME, refId, nameKey);
+      		UpdateCategory := False;
+      		Exit;
+    		end;
+
+      nameKey := BuildNameKey(rec.Name);
+      BTAddKey(FCategoryTable, NDX_CAT_NAME, rec.Id, nameKey);
+  		if not IsamOK then
+  			begin
+    			SetSystemError;
+      		LogSystemError('Failed to add key for category - ' + rec.Name);
+
+      		UpdateCategory := False;
+    		end;
     end;
 end;
 
-function TDatabase.GetCategory(const id: LongInt;
-							var rec: TCategory; var errCode: Byte): Boolean;
+function TDatabase.GetCategory(const id: LongInt; var rec: TCategory): Boolean;
 var
 	data: TCategoryRecord;
 begin
-	errCode := NO_ERROR;
+	ClearErrors;
   GetCategory := True;
 
 	FillChar(data, SizeOf(TCategoryRecord), #0);
@@ -450,7 +535,13 @@ begin
   BTGetRec(FCategoryTable, id, data, False);
   if not IsamOK then
   	begin
-    	errCode := QRY_REC_NOT_FOUND;
+      if BTIsamErrorClass <> BT_ERROR_CLS_USER then
+      	begin
+      		SetSystemError;
+          LogSystemError('Failed to find category - ' + Long2Str(id));
+        end
+      else
+      	DbError := RECORD_NOT_FOUND;
       GetCategory := False;
       Exit;
     end;
@@ -460,26 +551,31 @@ begin
   rec.Comment := data.Comment;
 end;
 
-function TDatabase.GetCategoryByName(const aName: String;
-								var rec: TCategory; var errCode: Byte): Boolean;
+function TDatabase.GetCategoryByName(const aName: String; var rec: TCategory): Boolean;
 var
 	data: TCategoryRecord;
   refId: LongInt;
   nameKey: String;
 begin
-	errCode := NO_ERROR;
+	ClearErrors;
   GetCategoryByName := True;
 
 	FillChar(data, SizeOf(TCategoryRecord), #0);
   refId := 0;
-  nameKey := GetCatNameKey(aName);
+  nameKey := BuildNameKey(aName);
 
   (* Find the physical id for the record *)
   BTClearKey(FCategoryTable, NDX_CAT_NAME);
   BTFindKey(FCategoryTable, NDX_CAT_NAME, refId, nameKey);
   if not IsamOK then
   	begin
-    	errCode := QRY_REC_NOT_FOUND;
+    	if BTIsamErrorClass <> BT_ERROR_CLS_USER then
+      	begin
+      		SetSystemError;
+          LogSystemError('Failed to find category - ' + aName);
+        end
+      else
+      	DbError := RECORD_NOT_FOUND;
       GetCategoryByName := False;
       Exit;
     end;
@@ -488,9 +584,14 @@ begin
   BTGetRec(FCategoryTable, refId, data, False);
   if not IsamOK then
   	begin
-    	errCode := CRUD_NO_GET_REC;
+      if BTIsamErrorClass <> BT_ERROR_CLS_USER then
+      	begin
+      		SetSystemError;
+          LogSystemError('Failed to find category - ' + aName);
+        end
+      else
+      	DbError := RECORD_NOT_FOUND;
       GetCategoryByName := False;
-      DoLogError('Failed to load category record - ' + aName);
       Exit;
     end;
 
@@ -504,12 +605,313 @@ begin
 	DeleteCategory := True;
 
 	BTDeleteRec(FCategoryTable, id);
+  if not IsamOK then
+  	begin
+    	begin
+      	SetSystemError;
+        LogSystemError('Failed to delete category - ' + Long2Str(id));
+      end
+    end;
+end;
+
+{ --- Sub Category --- }
+
+function TDatabase.IsSubCategoryDefined(const aCategoryId: LongInt;
+																					const aName: String): Boolean;
+var
+	nameKey: String;
+begin
+	nameKey := BuildSubNameKey(aCategoryId, aName);
+	IsSubCategoryDefined := False;
+
+	if BTKeyExists(FSubCategoryTable, NDX_SUB_CAT_NAME, 0, nameKey) then
+    IsSubCategoryDefined := True;
+end;
+
+function TDatabase.AddSubCategory(var rec: TSubCategory): Boolean;
+var
+	data: TSubCategoryRecord;
+  nameKey: String;
+  stamp: TTimeStamp;
+  refId: LongInt;
+begin
+	ClearErrors;
+  AddSubCategory := True;
+
+  (* Check owning category exists *)
+  if not CategoryExists(rec.CategoryId) then
+  	begin
+      AddSubCategory := False;
+      DbError := FOREIGN_KEY_NOT_FOUND;
+      Exit;
+    end;
+
+	(* Check that it's not a duplicate *)
+  if IsSubCategoryDefined(rec.CategoryId, rec.Name) then
+  	begin
+    	DbError := DUPLICATE_RECORD;
+      AddSubCategory := False;
+      Exit;
+    end;
+
+  (* Insert the record *)
+  FillChar(data, SizeOf(TSubCategoryRecord), #0);
+  stamp.Init;
+
+  data.Name := rec.Name;
+  data.Comment := rec.Comment;
+  data.CategoryId := rec.CategoryId;
+  data.Created := stamp.Pack;
+  data.Updated := stamp.Pack;
+
+  BTAddRec(FSubCategoryTable, refId, data);
+  if not IsamOk then
+  	begin
+    	SetSystemError;
+      LogSystemError('Failed to insert sub-category: ' + rec.Name);
+
+      AddSubCategory := False;
+      Exit;
+    end;
+
+  rec.Id := refId;
+  stamp.Done;
+
+  (* Create the keys *)
+  nameKey := BuildSubNameKey(rec.CategoryId, rec.Name);
+  BTAddKey(FSubCategoryTable, NDX_SUB_CAT_NAME, refId, nameKey);
+  if not IsamOk then
+  	begin
+    	SetSystemError;
+      LogSystemError('Failed to add sub-category name key: ' + rec.Name);
+
+      AddSubCategory := False;
+      Exit;
+    end;
+
+	BTAddKey(FSubCategoryTable, NDX_SUB_CAT_CAT_ID, refId, BuildIdKey(rec.CategoryId));
+  if not IsamOk then
+  	begin
+    	SetSystemError;
+      LogSystemError('Failed to add sub-category category key: ' + rec.Name);
+
+      AddSubCategory := False;
+      Exit;
+    end;
+end;
+
+function TDatabase.GetSubCategory(const id: LongInt; var rec: TSubCategory): Boolean;
+var
+	data: TSubCategoryRecord;
+begin
+	ClearErrors;
+  GetSubCategory := True;
+
+  FillChar(data, SizeOf(TSubCategoryRecord), #0);
+
+  BTGetRec(FSubCategoryTable, id, data, False);
+  if not IsamOK then
+  	begin
+      if BTIsamErrorClass <> BT_ERROR_CLS_USER then
+      	begin
+      		SetSystemError;
+          LogSystemError('Failed to find sub-category - ' + Long2Str(id));
+        end
+      else
+      	DbError := RECORD_NOT_FOUND;
+      GetSubCategory := False;
+      Exit;
+    end;
+
+  rec.Id := id;
+  rec.Name := data.Name;
+  rec.Comment := data.Comment;
+  rec.CategoryId := data.CategoryId;
+end;
+
+function TDatabase.UpdateSubCategory(const rec: TSubCategory): Boolean;
+var
+	data: TSubCategoryRecord;
+  oldName, nameKey: String;
+  oldCatId: LongInt;
+  stamp: TTimeStamp;
+begin
+	ClearErrors;
+  UpdateSubCategory := True;
+
+	(* Load current record *)
+  FillChar(data, SizeOf(TSubCategoryRecord), #0);
+
+  BTGetRec(FSubCategoryTable, rec.Id, data, False);
+  if not IsamOK then
+  	begin
+      if BTIsamErrorClass <> BT_ERROR_CLS_USER then
+      	begin
+      		SetSystemError;
+          LogSystemError('Failed to find sub-category - ' + Long2Str(rec.Id));
+        end
+      else
+      	DbError := RECORD_NOT_FOUND;
+      UpdateSubCategory := False;
+      Exit;
+    end;
+
+  (* Check owning category exists *)
+  if not CategoryExists(rec.CategoryId) then
+  	begin
+      UpdateSubCategory := False;
+      DbError := FOREIGN_KEY_NOT_FOUND;
+      Exit;
+    end;
+
+  (* Check for duplicate record *)
+  oldName := '';
+  oldCatId := 0;
+  if CompString(data.Name, rec.Name) <> Equal then
+  	begin
+    	oldName := data.Name;
+      oldCatId := data.CategoryId;
+
+  		if IsSubCategoryDefined(rec.CategoryId, rec.Name) then
+  			begin
+    			DbError := DUPLICATE_RECORD;
+      		UpdateSubCategory := False;
+      		Exit;
+    		end;
+    end;
+
+  if data.CategoryId <> rec.CategoryId then
+  	oldCatId := data.CategoryId;
+
+  (* Update record *)
+  stamp.Init;
+
+  data.Name := rec.Name;
+  data.Comment := rec.Comment;
+  data.CategoryId := rec.CategoryId;
+  data.Updated := stamp.Pack;
+
+  BTPutRec(FSubCategoryTable, rec.Id, data, False);
+  if not IsamOK then
+  	begin
+    	SetSystemError;
+      LogSystemError('Failed to find category - ' + Long2Str(rec.Id));
+
+      UpdateSubCategory := False;
+      Exit;
+    end;
+
+  stamp.Done;
+
+  if not IsEmpty(oldName) then
+  	begin
+    	nameKey := BuildSubNameKey(oldCatId, oldName);
+    	BTDeleteKey(FSubCategoryTable, NDX_SUB_CAT_NAME, rec.Id, nameKey);
+  		if not IsamOK then
+  			begin
+    			SetSystemError;
+      		LogSystemError('Failed to delete old sub-category key - ' + oldName);
+
+      		UpdateSubCategory := False;
+      		Exit;
+    		end;
+
+      nameKey := BuildSubNameKey(rec.CategoryId, rec.Name);
+      BTAddKey(FSubCategoryTable, NDX_SUB_CAT_NAME, rec.Id, nameKey);
+  		if not IsamOK then
+  			begin
+    			SetSystemError;
+      		LogSystemError('Failed to add sub-category key - ' + rec.Name);
+
+      		UpdateSubCategory := False;
+      		Exit;
+    		end;
+
+    end;
+
+  if oldCatId <> 0 then
+  	begin
+			BTDeleteKey(FSubCategoryTable, NDX_SUB_CAT_CAT_ID, rec.Id, BuildIdKey(oldCatId));
+  		if not IsamOK then
+  			begin
+    			SetSystemError;
+      		LogSystemError('Failed to delete FK Category on sub-category - ' + rec.Name);
+
+      		UpdateSubCategory := False;
+      		Exit;
+    		end;
+
+			BTAddKey(FSubCategoryTable, NDX_SUB_CAT_CAT_ID, rec.Id, BuildIdKey(rec.CategoryId));
+  		if not IsamOK then
+  			begin
+    			SetSystemError;
+      		LogSystemError('Failed to add FK Category on sub-category - ' + rec.Name);
+
+      		UpdateSubCategory := False;
+      		Exit;
+    		end;
+    end
+end;
+
+function TDatabase.DeleteSubCategory(const id: LongInt;
+																		var errCode: Byte): Boolean;
+begin
+	errCode := NO_ERROR;
+  DeleteSubCategory := True;
+
+	BTDeleteRec(FSubCategoryTable, id);
 
   if not IsamOK then
   	begin
-    	DeleteCategory := False;
-      DoLogError('Failed to delete category: ' + Long2Str(id));
+    	DeleteSubCategory := False;
+      DoLogError('Failed to delete sub-category: ' + Long2Str(id));
     end;
+end;
+
+(********************)
+(* Support Routines *)
+(********************)
+
+procedure ClearErrors;
+begin
+	DbError := NO_ERROR;
+  DbErrorMessage := '';
+end;
+
+procedure SetSystemError;
+begin
+	DbError := IsamError;
+  DbErrorMessage := IsamErrorMessage(IsamError);
+end;
+
+procedure LogSystemError(const message: String);
+var
+  errNumStr: String;
+begin
+	errNumStr := Long2Str(IsamError);
+  LogError(message + ' (' + errNumStr + ')');
+  LogAddInfo(IsamErrorMessage(IsamError));
+end;
+
+procedure LogFatalError(const exitCode: Byte; const message: String);
+begin
+	LogSystemError(message);
+  Crash(exitCode);
+end;
+
+function BuildIdKey(const aId: LongInt): String;
+begin
+	BuildIdKey := LeftPadCh(Long2Str(aId), '0', 10);
+end;
+
+function BuildNameKey(const aName: String): String;
+begin
+	BuildNameKey := StUpcase(aName);
+end;
+
+function BuildSubNameKey(const aId: LongInt; const aName: String): String;
+begin
+	BuildSubNameKey := BuildNameKey(aName) + BuildIdKey(aId);
 end;
 
 end.

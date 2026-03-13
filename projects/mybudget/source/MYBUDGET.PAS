@@ -15,7 +15,8 @@ var
 	pSysExitProc: Pointer;	{ Holds a reference to the system exit proc }
 	aFileName: PathStr;
 	dBase: TDatabase;
-  rec: TCategory;
+  catRec: TCategory;
+  subCatRec: TSubCategory;
   errCode: Byte;
 
 procedure AppExitProc; far;
@@ -41,27 +42,28 @@ begin
 
   { Configure the database }
   dBase.Init(ConfigInfo.DatabaseFolder);
+(*
+  catRec.Init;
+  catRec.Name := 'Travel';
+  catRec.Comment := 'No Comment';
+  dBase.AddCategory(catRec);
 
-  { Load the UI }
-(*  rec.Init;
-  rec.Name := 'Food & Drink';
-  rec.Comment := 'Not Comment';
 
-  if dBase.AddCategory(rec, errCode) then
-  	WriteLn('Category added ', rec.Id);
+  subCatRec.Init;
+  subCatRec.Name := 'Apples & Bananas';
+  subCatRec.Comment := 'No Comment';
+  subCatRec.CategoryId := 1;
 
-  if dBase.GetCategoryByName('Food & Drink', rec, errCode) then
-  	WriteLn('Category ', rec.Name);
+  if not dBase.AddSubCategory(subCatRec) then
+  	begin
+    	WriteLn('Failed to insert Sub Category: ', errCode);
+    end;
+*)
+  subCatRec.Init;
+  dBase.GetSubCategory(1, subCatRec);
 
-  rec.Comment := 'New Comment';
-
-  if dBase.UpdateCategory(rec, errCode) then
-  	WriteLn('Record updated'); *)
-
-  dBase.DeleteCategory(1);
-
-  if Not dBase.GetCategoryByName('Food & Drink', rec, errCode) then
-  	WriteLn('Failed to load record ', errCode);
+  subCatRec.Comment := 'New Comment';
+  dBase.UpdateCategory(subCatRec);
 
   ReadLn;
 

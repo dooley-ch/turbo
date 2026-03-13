@@ -8,7 +8,22 @@
 (*--------------------------------------------------------*)
 
 const
+	BT_ERROR_CLS_NONE							: Byte =   0;
+  BT_ERROR_CLS_USER							: Byte =   1;
+  BT_ERROR_CLS_LOCK							: Byte =   2;
+  BT_ERROR_CLS_NO_OP						: Byte =   3;
+  BT_ERROR_CLS_HARD							: Byte = 	 4;
+
 	NO_ERROR											: Byte =   0;
+  INTERNAL_ERROR								: Byte = 255;
+  DB_INTERNAL_ERROR							: Byte = 250;
+
+	DUPLICATE_RECORD  						: Byte =   5;
+  RECORD_NOT_FOUND              : Byte =  10;
+  FOREIGN_KEY_NOT_FOUND					: Byte =  15;
+  RECORD_DELETED								: Byte =  20;
+  INVALID_RECORD								: Byte =  25;
+
 
   DBE_INIT_FAILED 							: Byte =  10;
   DBE_NO_CREATE_TABLE						:	Byte =  15;
@@ -21,6 +36,7 @@ const
   CRUD_NO_UPDATE								: Byte =  45;
 
   QRY_REC_NOT_FOUND							: Byte =  50;
+  QRY_NO_FK_FOUND								: Byte =  55;
 
 	ERR_FAILED_TO_CREATE_TABLE		: Byte = 	 10;
   ERR_FAILED_TO_OPEN_TABLE			: Byte = 	 15;
